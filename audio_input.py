@@ -4,7 +4,7 @@ import sherpa_onnx
 import json
 import asyncio
 
-class MicrophoneRecorder:
+class MicrophoneDevice:
     def __init__(self, device: int = None, sample_rate: int = 16000):
         self.device = device
         self.sample_rate = sample_rate
@@ -66,7 +66,7 @@ class AsrModule:
         return result["text"]
         
 async def main():
-    microphone = MicrophoneRecorder()
+    microphone = MicrophoneDevice()
     vad_module = VadModule()
     asr_module = AsrModule()
     

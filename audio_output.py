@@ -2,7 +2,14 @@ import time
 import soundfile as sf
 import sherpa_onnx
 import sounddevice as sd
-import numpy as np
+
+class SpeakerDevice:
+    def __init__(self):
+        pass
+    def play(self,samples,sample_rate):
+        sd.play(samples, samplerate=sample_rate)
+        sd.wait()
+        
 
 class MatchaTTS:
     def __init__(self):
@@ -51,22 +58,12 @@ class MatchaTTS:
 
         return audio.samples, audio.sample_rate
 
-    def play_audio(self, samples, sample_rate: int):
-        print("[MatchaTTS] Playing audio...")
-        sd.play(samples, samplerate=sample_rate)
-        sd.wait()  # 等待播放结束
-        print("[MatchaTTS] Playback finished.")
-        
-    def text_to_speech(self, text: str):
-        if text == "":
-            return
-        samples, sample_rate = self.synthesize(text)
-        self.play_audio(samples, sample_rate)
-        
-# def main():
-#     tts = MatchaTTS()
-#     tts.text_to_speech("如果你想要非阻塞播放或者更复杂的播放控制，也可以告诉我，我帮你写。")
+def main():
+    tts = MatchaTTS()
+    speaker_device = SpeakerDevice()
+    samples, sample_rate = tts.synthesize("合成语音并返回音频数据，若指定路径则保存为")
+    speaker_device.play(samples,sample_rate)
     
     
-# if __name__ == "__main__":
-#     main()
+if __name__ == "__main__":
+    main()
