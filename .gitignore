@@ -225,3 +225,99 @@ models/**
 
 # Ignore all CSV files in the project root
 *.csv
+
+# macOS specific files
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Editor swap files
+*.swp
+*.swo
+*~
+.*.swp
+.*.swo
+
+# IDE specific files
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# Certificate files (security sensitive)
+certificates/*.pem
+certificates/*.key
+certificates/*.crt
+certificates/*.cer
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Audio/Video processing temporary files
+*.part
+*.download
+
+# Project specific directories that might contain generated/temporary data
+EmotionCV/venv/
+EmotionCV/__pycache__/
+EmotionCV/*.pyc
+TodoList/__pycache__/
+TodoList/*.pyc
+
+# Dify related temporary files
+dify_knowledge/*.tmp
+dify_requester/*.tmp
+dify_user/*.tmp
+
+# Test outputs
+test_output/
+test_results/
+*.test.log
+
+# Node.js 相关垃圾
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Node.js 依赖目录
+.npm
+.yarn/cache
+.yarn/unplugged
+.yarn/install-state.gz
+.pnp.*
+
+# Node.js 构建输出
+dist/
+build/
+.next/
+.nuxt/
+.cache/
+.parcel-cache/
+
+# 包管理器锁文件（根据项目需要可以取消注释）
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+
+# TypeScript
+*.tsbuildinfo
+
+# 环境变量文件
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# macOS npm 全局安装的垃圾
+.npm-global/
