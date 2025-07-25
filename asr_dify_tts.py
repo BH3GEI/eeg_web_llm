@@ -71,7 +71,7 @@ async def main():
         
         response = requester.chat.request(query=text, inputs=inputs)
         print(response["answer"])
-        samples,sample_rate = tts.synthesize(json.loads(response["answer"])["text"])
+        samples,sample_rate = tts.synthesize(json.loads(response["answer"])["answer"])
         speaker_device.play(samples,sample_rate)
     
     await vad.vad_handler(fucking_callback,microphone.recorder)
