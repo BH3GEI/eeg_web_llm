@@ -213,27 +213,20 @@ async def call_gemini_api(prompt: str) -> str:
     api_url = os.getenv("GEMINI_API_URL")
     
     payload = {
-        "contents": [
-            {
-                "parts": [
-                    {
-                        "text": prompt
-                    }
-                ]
-            }
-        ]
+        "model": "moonshot-v1-8k",
+        "messages": [{"role": "user", "content": prompt}]
     }
     
     headers = {
         'Content-Type': 'application/json',
-        'X-goog-api-key': api_key
+        'Authorization': f'Bearer {api_key}'
     }
     
     try:
         response = requests.post(api_url, headers=headers, json=payload)
         response.raise_for_status()
         result = response.json()
-        return result['candidates'][0]['content']['parts'][0]['text']
+        return result['choices'][0]['message']['content']
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"AI API调用失败: {str(e)}")
 
