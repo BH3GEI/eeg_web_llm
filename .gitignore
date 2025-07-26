@@ -210,9 +210,6 @@ __marimo__/
 models/**
 
 # Ignore media files (images, audio, video) in the project root
-*.png
-*.jpg
-*.jpeg
 *.gif
 *.bmp
 *.mp3
