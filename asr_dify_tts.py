@@ -2,8 +2,6 @@ from audio_input import *
 from audio_output import *
 import asyncio
 from typing import Callable, Dict, Any, Optional, Union, List
-from dify_requester import DifyRequester,DifyDecoder
-from dify_knowledge import DifyKnowledge
 from segmentation import JsonDecoder,RealTimeResponseSegmentation
 import json
 
