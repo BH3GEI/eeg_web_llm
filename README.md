@@ -35,7 +35,6 @@ cp .env.example .env
 
 #### KIMI API配置
 
-1. 
 
 #### Emotiv 配置
 
