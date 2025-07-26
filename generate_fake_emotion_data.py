@@ -50,7 +50,7 @@ def write_emotion_data():
     # 检查文件是否存在，如果不存在则写入表头
     file_exists = os.path.exists(csv_file)
     
-    print(f"🧠 开始生成模拟脑机情绪数据...")
+    print(f" 开始生成模拟脑机情绪数据...")
     print(f"📁 数据文件: {csv_file}")
     print(f"⏱️  采样间隔: 0.5秒")
     print(f"🎭 支持情绪: {', '.join(emotions)}")
@@ -119,7 +119,7 @@ def generate_batch_data(num_samples=100):
     # 确保目录存在
     os.makedirs(os.path.dirname(csv_file), exist_ok=True)
     
-    print(f"🧠 生成 {num_samples} 个模拟情绪数据样本...")
+    print(f" 生成 {num_samples} 个模拟情绪数据样本...")
     
     current_emotion = 'neutral'
     emotion_duration = 0
@@ -167,7 +167,7 @@ def generate_batch_data(num_samples=100):
 if __name__ == "__main__":
     import sys
     
-    print("🧠 模拟脑机情绪数据生成器")
+    print(" 模拟脑机情绪数据生成器")
     print("=" * 40)
     
     if len(sys.argv) > 1 and sys.argv[1] == "batch":
