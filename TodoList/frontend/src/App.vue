@@ -89,6 +89,13 @@
               直接生成任务计划
             </button>
           </div>
+          
+          <!-- 新建对话按钮 -->
+          <div v-if="chatMessages.length > 0" class="new-chat-hint">
+            <button @click="startNewConversation" class="new-chat-btn">
+              开始新对话
+            </button>
+          </div>
         </div>
       </div>
 
@@ -208,71 +215,156 @@
           </button>
         </div>
 
-        <!-- 实时趋势图区域 -->
-        <div class="trends-section">
+        <!-- 实时生理监控 -->
+        <div class="monitoring-section">
           <h3>实时生理监控</h3>
-          <div class="trends-grid">
-            <!-- 心率趋势 -->
-            <div class="trend-chart">
-              <div class="chart-header">
-                <h4>心率</h4>
-                <span class="current-value">{{ focusMode.metrics.heart_rate || '--' }} BPM</span>
+          <div class="data-quality-indicator">
+            <span :class="['quality-dot', focusMode.dataQuality]"></span>
+            <span class="quality-text">
+              {{ focusMode.dataQuality === 'good' ? '真实EEG数据' : 
+                 focusMode.dataQuality === 'simulated' ? '模拟数据' : '回退数据' }}
+            </span>
+          </div>
+          
+          <!-- EEG脑电波数据区 -->
+          <div class="eeg-section">
+            <h4 class="section-title">脑电波指标</h4>
+            <div class="eeg-grid">
+              <!-- 专注度 - 主要指标 -->
+              <div class="trend-chart primary">
+                <div class="chart-header">
+                  <h4>专注度</h4>
+                  <span class="current-value">{{ Math.round((focusMode.metrics.focus_level || 0) * 100) }}%</span>
+                </div>
+                <div class="mini-chart">
+                  <div 
+                    v-for="(value, index) in focusMode.trends.focus" 
+                    :key="index"
+                    class="chart-bar focus"
+                    :style="{ height: `${Math.max(5, value * 100)}%` }"
+                  ></div>
+                </div>
               </div>
-              <div class="mini-chart">
-                <div 
-                  v-for="(value, index) in focusMode.trends.heart_rate" 
-                  :key="index"
-                  class="chart-bar heart-rate"
-                  :style="{ height: `${Math.max(10, (value - 60) / 40 * 100)}%` }"
-                ></div>
+
+              <!-- 注意力 -->
+              <div class="trend-chart">
+                <div class="chart-header">
+                  <h4>注意力</h4>
+                  <span class="current-value">{{ Math.round((focusMode.metrics.attention || 0) * 100) }}%</span>
+                </div>
+                <div class="mini-chart">
+                  <div 
+                    v-for="(value, index) in focusMode.trends.attention" 
+                    :key="index"
+                    class="chart-bar attention"
+                    :style="{ height: `${Math.max(5, value * 100)}%` }"
+                  ></div>
+                </div>
+              </div>
+
+              <!-- 参与度 -->
+              <div class="trend-chart">
+                <div class="chart-header">
+                  <h4>参与度</h4>
+                  <span class="current-value">{{ Math.round((focusMode.metrics.engagement || 0) * 100) }}%</span>
+                </div>
+                <div class="mini-chart">
+                  <div 
+                    v-for="(value, index) in focusMode.trends.engagement" 
+                    :key="index"
+                    class="chart-bar engagement"
+                    :style="{ height: `${Math.max(5, value * 100)}%` }"
+                  ></div>
+                </div>
+              </div>
+
+              <!-- 兴奋度 -->
+              <div class="trend-chart">
+                <div class="chart-header">
+                  <h4>兴奋度</h4>
+                  <span class="current-value">{{ Math.round((focusMode.metrics.excitement || 0) * 100) }}%</span>
+                </div>
+                <div class="mini-chart">
+                  <div 
+                    v-for="(value, index) in focusMode.trends.excitement" 
+                    :key="index"
+                    class="chart-bar excitement"
+                    :style="{ height: `${Math.max(5, value * 100)}%` }"
+                  ></div>
+                </div>
+              </div>
+
+              <!-- 兴趣度 -->
+              <div class="trend-chart">
+                <div class="chart-header">
+                  <h4>兴趣度</h4>
+                  <span class="current-value">{{ Math.round((focusMode.metrics.interest || 0) * 100) }}%</span>
+                </div>
+                <div class="mini-chart">
+                  <div 
+                    v-for="(value, index) in focusMode.trends.interest" 
+                    :key="index"
+                    class="chart-bar interest"
+                    :style="{ height: `${Math.max(5, value * 100)}%` }"
+                  ></div>
+                </div>
+              </div>
+
+              <!-- 压力水平 -->
+              <div class="trend-chart">
+                <div class="chart-header">
+                  <h4>压力水平</h4>
+                  <span class="current-value">{{ Math.round((focusMode.metrics.stress_level || 0) * 100) }}%</span>
+                </div>
+                <div class="mini-chart">
+                  <div 
+                    v-for="(value, index) in focusMode.trends.stress" 
+                    :key="index"
+                    class="chart-bar stress"
+                    :style="{ height: `${Math.max(5, value * 100)}%` }"
+                  ></div>
+                </div>
+              </div>
+
+              <!-- 放松度 -->
+              <div class="trend-chart">
+                <div class="chart-header">
+                  <h4>放松度</h4>
+                  <span class="current-value">{{ Math.round((focusMode.metrics.relaxation || 0) * 100) }}%</span>
+                </div>
+                <div class="mini-chart">
+                  <div 
+                    v-for="(value, index) in focusMode.trends.relaxation" 
+                    :key="index"
+                    class="chart-bar relaxation"
+                    :style="{ height: `${Math.max(5, value * 100)}%` }"
+                  ></div>
+                </div>
               </div>
             </div>
+          </div>
 
-            <!-- 专注度趋势 -->
-            <div class="trend-chart">
-              <div class="chart-header">
-                <h4>专注度</h4>
-                <span class="current-value">{{ Math.round((focusMode.metrics.focus_level || 0) * 100) }}%</span>
+          <!-- 情绪识别数据区 -->
+          <div class="emotion-section">
+            <h4 class="section-title">情绪识别</h4>
+            <div class="emotion-display">
+              <div class="current-emotion">
+                <span class="emotion-label">当前情绪</span>
+                <span class="emotion-indicator" :class="focusMode.metrics.current_emotion">
+                  {{ getEmotionText(focusMode.metrics.current_emotion) }}
+                </span>
               </div>
-              <div class="mini-chart">
-                <div 
-                  v-for="(value, index) in focusMode.trends.focus" 
-                  :key="index"
-                  class="chart-bar focus"
-                  :style="{ height: `${Math.max(5, value * 100)}%` }"
-                ></div>
-              </div>
-            </div>
-
-            <!-- 压力水平趋势 -->
-            <div class="trend-chart">
-              <div class="chart-header">
-                <h4>压力水平</h4>
-                <span class="current-value">{{ Math.round((focusMode.metrics.stress_level || 0) * 100) }}%</span>
-              </div>
-              <div class="mini-chart">
-                <div 
-                  v-for="(value, index) in focusMode.trends.stress" 
-                  :key="index"
-                  class="chart-bar stress"
-                  :style="{ height: `${Math.max(5, value * 100)}%` }"
-                ></div>
-              </div>
-            </div>
-
-            <!-- 干扰次数趋势 -->
-            <div class="trend-chart">
-              <div class="chart-header">
-                <h4>干扰频率</h4>
-                <span class="current-value">{{ focusMode.metrics.interruptions || 0 }} 次</span>
-              </div>
-              <div class="mini-chart">
-                <div 
-                  v-for="(value, index) in focusMode.trends.interruptions" 
-                  :key="index"
-                  class="chart-bar interruption"
-                  :style="{ height: `${Math.max(5, Math.min(100, value * 25))}%` }"
-                ></div>
+              <div class="emotion-confidence">
+                <span class="confidence-label">置信度</span>
+                <div class="confidence-bar">
+                  <div 
+                    class="confidence-fill" 
+                    :style="{ width: `${(focusMode.metrics.emotion_confidence || 0) * 100}%` }"
+                  ></div>
+                </div>
+                <span class="confidence-text">
+                  {{ Math.round((focusMode.metrics.emotion_confidence || 0) * 100) }}%
+                </span>
               </div>
             </div>
           </div>
@@ -378,18 +470,26 @@ export default {
         timer: null,
         dataUpdateTimer: null,
         metrics: {
-          heart_rate: null,
-          stress_level: 0.5,
-          emotion_state: 'neutral',
           focus_level: 0,
-          interruptions: 0
+          attention: 0,
+          engagement: 0,
+          excitement: 0,
+          interest: 0,
+          stress_level: 0,
+          relaxation: 0,
+          current_emotion: 'neutral',
+          emotion_confidence: 0
         },
         trends: {
-          heart_rate: Array(10).fill(75),
           focus: Array(10).fill(0.8),
+          attention: Array(10).fill(0.75),
+          engagement: Array(10).fill(0.7),
+          excitement: Array(10).fill(0.6),
+          interest: Array(10).fill(0.65),
           stress: Array(10).fill(0.3),
-          interruptions: Array(10).fill(0)
-        }
+          relaxation: Array(10).fill(0.6)
+        },
+        dataQuality: 'simulated'
       }
     }
   },
@@ -421,8 +521,10 @@ export default {
     }
   },
   async mounted() {
-    // 生成会话ID
-    this.sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
+    // 持久化会话ID - 不再每次刷新都丢失！
+    this.sessionId = localStorage.getItem('smart_todo_session_id') || 
+                     'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
+    localStorage.setItem('smart_todo_session_id', this.sessionId)
     
     await this.loadGoals()
     
@@ -547,6 +649,34 @@ export default {
       }
     },
     
+    startNewConversation() {
+      // 清空当前对话
+      this.chatMessages = []
+      this.conversationId = null
+      this.canGenerateTasks = false
+      this.chatInput = ''
+      
+      // 生成新的会话ID（保持同一个session但开始新对话）
+      const timestamp = Date.now()
+      
+      // 显示确认消息
+      this.showNotification('已开始新对话，之前的记忆仍会保留')
+      
+      // 可选：调用后端创建新对话
+      this.createNewConversation()
+    },
+    
+    async createNewConversation() {
+      try {
+        // 可以调用后端API来标记新对话的开始
+        await axios.post('/api/new-conversation', {
+          session_id: this.sessionId
+        })
+      } catch (error) {
+        console.error('创建新对话失败:', error)
+      }
+    },
+    
     // 专注模式相关方法
     async startGoalFocusMode(goal) {
       try {
@@ -564,16 +694,22 @@ export default {
           timer: null,
           dataUpdateTimer: null,
           metrics: {
-            heart_rate: null,
-            stress_level: 0.5,
-            emotion_state: 'neutral',
             focus_level: 0,
-            interruptions: 0
+            attention: 0,
+            engagement: 0,
+            stress_level: 0,
+            relaxation: 0,
+            current_emotion: 'neutral',
+            emotion_confidence: 0
           },
           trends: {
-            heart_rate: Array(10).fill(75),
-            focus: Array(10).fill(0.8)
-          }
+            focus: Array(10).fill(0.8),
+            attention: Array(10).fill(0.75),
+            engagement: Array(10).fill(0.7),
+            stress: Array(10).fill(0.3),
+            relaxation: Array(10).fill(0.6)
+          },
+          dataQuality: 'simulated'
         }
         
         // 阻止背景滚动
@@ -610,12 +746,12 @@ export default {
     },
     
     async startDataUpdates() {
-      // 每5秒更新一次模拟数据
+      // 每2秒更新一次数据（更实时）
       this.focusMode.dataUpdateTimer = setInterval(async () => {
         if (!this.focusMode.paused) {
           await this.updateFocusData()
         }
-      }, 5000)
+      }, 2000)  // 从5000改为2000毫秒
       
       // 立即获取一次数据
       await this.updateFocusData()
@@ -627,31 +763,58 @@ export default {
         const taskId = this.focusMode.currentTask ? this.focusMode.currentTask.id : this.focusMode.goal.id
         const response = await axios.get(`/api/focus/current/${taskId}`)
         const data = response.data.current_data
+        const trends = response.data.trends
         
         // 更新当前指标
         this.focusMode.metrics = {
-          heart_rate: data.heart_rate,
-          stress_level: data.stress_level,
-          emotion_state: data.emotion_state,
           focus_level: data.focus_level,
-          interruptions: data.interruptions
+          attention: data.attention,
+          engagement: data.engagement,
+          excitement: data.excitement,
+          interest: data.interest,
+          stress_level: data.stress_level,
+          relaxation: data.relaxation,
+          current_emotion: data.current_emotion,
+          emotion_confidence: data.emotion_confidence
         }
         
+        // 更新数据质量标识
+        this.focusMode.dataQuality = data.data_quality === 'good' ? 'good' : 
+                                     data.data_quality === 'simulated' ? 'simulated' : 'fallback'
+        
         // 更新趋势数据
-        this.focusMode.trends.heart_rate.shift()
-        this.focusMode.trends.heart_rate.push(data.heart_rate)
+        if (trends.focus) {
+          this.focusMode.trends.focus = trends.focus.slice(-10)
+        }
+        if (trends.attention) {
+          this.focusMode.trends.attention = trends.attention.slice(-10)
+        }
+        if (trends.engagement) {
+          this.focusMode.trends.engagement = trends.engagement.slice(-10)
+        }
+        if (trends.excitement) {
+          this.focusMode.trends.excitement = trends.excitement.slice(-10)
+        }
+        if (trends.interest) {
+          this.focusMode.trends.interest = trends.interest.slice(-10)
+        }
+        if (trends.stress) {
+          this.focusMode.trends.stress = trends.stress.slice(-10)
+        }
+        if (trends.relaxation) {
+          this.focusMode.trends.relaxation = trends.relaxation.slice(-10)
+        }
         
-        this.focusMode.trends.focus.shift()
-        this.focusMode.trends.focus.push(data.focus_level)
-        
-        this.focusMode.trends.stress.shift()
-        this.focusMode.trends.stress.push(data.stress_level)
-        
-        this.focusMode.trends.interruptions.shift()
-        this.focusMode.trends.interruptions.push(data.interruptions)
+        console.log('Focus data updated:', {
+          metrics: this.focusMode.metrics,
+          dataQuality: this.focusMode.dataQuality,
+          metadata: response.data.metadata
+        })
         
       } catch (error) {
         console.error('更新专注数据失败:', error)
+        // 如果获取失败，设置为回退状态
+        this.focusMode.dataQuality = 'fallback'
       }
     },
     
@@ -818,18 +981,26 @@ export default {
         timer: null,
         dataUpdateTimer: null,
         metrics: {
-          heart_rate: null,
-          stress_level: 0.5,
-          emotion_state: 'neutral',
           focus_level: 0,
-          interruptions: 0
+          attention: 0,
+          engagement: 0,
+          excitement: 0,
+          interest: 0,
+          stress_level: 0,
+          relaxation: 0,
+          current_emotion: 'neutral',
+          emotion_confidence: 0
         },
         trends: {
-          heart_rate: Array(10).fill(75),
           focus: Array(10).fill(0.8),
+          attention: Array(10).fill(0.75),
+          engagement: Array(10).fill(0.7),
+          excitement: Array(10).fill(0.6),
+          interest: Array(10).fill(0.65),
           stress: Array(10).fill(0.3),
-          interruptions: Array(10).fill(0)
-        }
+          relaxation: Array(10).fill(0.6)
+        },
+        dataQuality: 'simulated'
       }
     },
     
@@ -916,6 +1087,24 @@ export default {
       }
     },
     
+    getEmotionText(emotion) {
+      const emotionMap = {
+        'happy': '愉悦',
+        'sad': '悲伤',
+        'angry': '愤怒',
+        'fear': '恐惧',
+        'surprise': '惊讶',
+        'disgust': '厌恶',
+        'neutral': '中性',
+        'focused': '专注',
+        'calm': '平静',
+        'thinking': '思考',
+        'relaxed': '放松',
+        'excited': '兴奋'
+      }
+      return emotionMap[emotion] || emotion
+    },
+
     showNotification(message, type = 'success') {
       // 移动端友好的通知实现
       const notification = document.createElement('div')
@@ -1242,6 +1431,33 @@ export default {
 .manual-generate-btn:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(100, 181, 246, 0.3);
+}
+
+/* 新建对话提示 */
+.new-chat-hint {
+  margin-top: 15px;
+  padding: 12px;
+  background: rgba(164, 160, 134, 0.08);
+  border: 1px solid rgba(164, 160, 134, 0.2);
+  border-radius: 12px;
+  text-align: center;
+}
+
+.new-chat-btn {
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #a4a086, #908972);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.new-chat-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(164, 160, 134, 0.3);
 }
 
 .goal-input {
@@ -1954,7 +2170,7 @@ export default {
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(135deg, #5c5144 0%, #6b5d4f 50%, #5c5144 100%);
+  background: linear-gradient(135deg, #f7f5f3 0%, #ede8e0 50%, #e8e2da 100%);
   z-index: 1000;
   display: flex;
   align-items: center;
@@ -1970,7 +2186,7 @@ export default {
   padding: 40px;
   display: flex;
   flex-direction: column;
-  color: white;
+  color: #6b5d4f;
   overflow-y: auto;
   overflow-x: hidden;
   box-sizing: border-box;
@@ -1983,13 +2199,13 @@ export default {
   justify-content: space-between;
   margin-bottom: 40px;
   padding-bottom: 20px;
-  border-bottom: 1px solid rgba(247, 245, 240, 0.1);
+  border-bottom: 1px solid rgba(107, 93, 79, 0.1);
 }
 
 .exit-focus-btn {
-  background: rgba(247, 245, 240, 0.2);
-  color: white;
-  border: 1px solid rgba(247, 245, 240, 0.3);
+  background: rgba(255, 253, 250, 0.9);
+  color: #6b5d4f;
+  border: 1px solid rgba(164, 160, 134, 0.3);
   width: 40px;
   height: 40px;
   border-radius: 50%;
@@ -2000,11 +2216,13 @@ export default {
   align-items: center;
   justify-content: center;
   transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
 .exit-focus-btn:hover {
-  background: rgba(247, 245, 240, 0.2);
+  background: rgba(164, 160, 134, 0.1);
   transform: scale(1.1);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.15);
 }
 
 .focus-header h2 {
@@ -2012,76 +2230,148 @@ export default {
   text-align: center;
   font-size: 2rem;
   margin: 0;
-  color: #c2b19f;
+  color: #6b5d4f;
   font-weight: 600;
 }
 
 .focus-timer {
   font-size: 2.5rem;
   font-weight: 700;
-  color: #e5d7c4;
-  text-shadow: 0 0 20px rgba(230, 210, 184, 0.3);
-  font-family: 'Courier New', monospace;
+  color: #a4a086;
+  text-shadow: 0 2px 10px rgba(164, 160, 134, 0.3);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 
-/* 趋势图区域 */
-.trends-section {
+/* 生理监控区域 */
+.monitoring-section {
   margin-bottom: 30px;
 }
 
-.trends-section h3 {
-  color: #c2b19f;
+.monitoring-section h3 {
+  color: #6b5d4f;
   font-size: 1.5rem;
-  margin-bottom: 30px;
+  margin-bottom: 20px;
   text-align: center;
+  font-weight: 600;
 }
 
-.trends-grid {
+/* 数据质量指示器 */
+.data-quality-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 25px;
+  padding: 8px 16px;
+  background: rgba(255, 253, 250, 0.9);
+  border-radius: 20px;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(164, 160, 134, 0.2);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.quality-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+.quality-dot.good {
+  background: #a4a086;
+  box-shadow: 0 0 8px rgba(164, 160, 134, 0.6);
+}
+
+.quality-dot.simulated {
+  background: #c2b19f;
+  box-shadow: 0 0 8px rgba(194, 177, 159, 0.6);
+}
+
+.quality-dot.fallback {
+  background: #d4c4b0;
+  box-shadow: 0 0 8px rgba(212, 196, 176, 0.6);
+}
+
+.quality-text {
+  color: #6b5d4f;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+/* EEG脑电波区域 */
+.eeg-section {
+  margin-bottom: 25px;
+}
+
+.section-title {
+  color: #6b5d4f;
+  font-size: 1.1rem;
+  margin-bottom: 15px;
+  padding-left: 10px;
+  border-left: 3px solid rgba(164, 160, 134, 0.5);
+  font-weight: 500;
+}
+
+.eeg-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 15px;
 }
 
 .trend-chart {
-  background: rgba(247, 245, 240, 0.1);
+  background: rgba(255, 253, 250, 0.9);
   border-radius: 15px;
-  padding: 20px;
+  padding: 15px;
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 253, 250, 0.2);
+  border: 1px solid rgba(164, 160, 134, 0.2);
   transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
 }
 
 .trend-chart:hover {
-  background: rgba(247, 245, 240, 0.15);
+  background: rgba(255, 253, 250, 0.95);
   transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+/* 主要图表强调样式 */
+.trend-chart.primary {
+  border: 2px solid rgba(164, 160, 134, 0.3);
+  background: rgba(164, 160, 134, 0.05);
+}
+
+.trend-chart.primary:hover {
+  border-color: rgba(164, 160, 134, 0.5);
+  background: rgba(164, 160, 134, 0.1);
+  box-shadow: 0 4px 20px rgba(164, 160, 134, 0.2);
 }
 
 .chart-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 15px;
+  margin-bottom: 12px;
 }
 
 .chart-header h4 {
-  color: rgba(247, 245, 240, 0.9);
-  font-size: 1rem;
+  color: #6b5d4f;
+  font-size: 0.9rem;
   margin: 0;
+  font-weight: 500;
 }
 
 .current-value {
   color: #a4a086;
-  font-size: 1rem;
+  font-size: 0.9rem;
   font-weight: 700;
-  text-shadow: 0 0 10px rgba(129, 199, 132, 0.5);
 }
 
 .mini-chart {
   display: flex;
   align-items: end;
-  height: 60px;
-  gap: 3px;
+  height: 50px;
+  gap: 2px;
   justify-content: space-between;
   padding: 0 2px;
 }
@@ -2094,14 +2384,29 @@ export default {
   position: relative;
 }
 
-.chart-bar.heart-rate {
-  background: linear-gradient(to top, #ff6b6b, #ff8e8e);
-  box-shadow: 0 0 6px rgba(255, 107, 107, 0.4);
-}
-
 .chart-bar.focus {
   background: linear-gradient(to top, #4ecdc4, #44a08d);
   box-shadow: 0 0 6px rgba(78, 205, 196, 0.4);
+}
+
+.chart-bar.attention {
+  background: linear-gradient(to top, #667eea, #764ba2);
+  box-shadow: 0 0 6px rgba(102, 126, 234, 0.4);
+}
+
+.chart-bar.engagement {
+  background: linear-gradient(to top, #f093fb, #f5576c);
+  box-shadow: 0 0 6px rgba(240, 147, 251, 0.4);
+}
+
+.chart-bar.excitement {
+  background: linear-gradient(to top, #ff9a56, #ffd84d);
+  box-shadow: 0 0 6px rgba(255, 154, 86, 0.4);
+}
+
+.chart-bar.interest {
+  background: linear-gradient(to top, #a8e6cf, #88d8a3);
+  box-shadow: 0 0 6px rgba(168, 230, 207, 0.4);
 }
 
 .chart-bar.stress {
@@ -2109,9 +2414,121 @@ export default {
   box-shadow: 0 0 6px rgba(255, 167, 38, 0.4);
 }
 
-.chart-bar.interruption {
-  background: linear-gradient(to top, #e74c3c, #c0392b);
-  box-shadow: 0 0 6px rgba(231, 76, 60, 0.4);
+.chart-bar.relaxation {
+  background: linear-gradient(to top, #a8edea, #fed6e3);
+  box-shadow: 0 0 6px rgba(168, 237, 234, 0.4);
+}
+
+/* 情绪识别区域 */
+.emotion-section {
+  background: rgba(255, 253, 250, 0.8);
+  border-radius: 15px;
+  padding: 20px;
+  border: 1px solid rgba(164, 160, 134, 0.2);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.emotion-display {
+  display: flex;
+  align-items: center;
+  gap: 25px;
+  justify-content: space-between;
+}
+
+.current-emotion {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.emotion-label {
+  color: #6b5d4f;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.emotion-indicator {
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-shadow: none;
+  transition: all 0.3s ease;
+}
+
+.emotion-indicator.happy {
+  background: linear-gradient(135deg, #d4c4b0, #c2b19f);
+  color: #6b5d4f;
+}
+
+.emotion-indicator.sad {
+  background: linear-gradient(135deg, #a4a086, #908972);
+  color: white;
+}
+
+.emotion-indicator.angry {
+  background: linear-gradient(135deg, #c2a398, #b59688);
+  color: white;
+}
+
+.emotion-indicator.fear {
+  background: linear-gradient(135deg, #b5a496, #a69080);
+  color: white;
+}
+
+.emotion-indicator.surprise {
+  background: linear-gradient(135deg, #d4c4b0, #c2b19f);
+  color: #6b5d4f;
+}
+
+.emotion-indicator.disgust {
+  background: linear-gradient(135deg, #a4a086, #908972);
+  color: white;
+}
+
+.emotion-indicator.neutral,
+.emotion-indicator.calm,
+.emotion-indicator.focused,
+.emotion-indicator.thinking {
+  background: linear-gradient(135deg, #a4a086, #908972);
+  color: white;
+}
+
+.emotion-confidence {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  max-width: 200px;
+}
+
+.confidence-label {
+  color: #6b5d4f;
+  font-size: 0.85rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.confidence-bar {
+  flex: 1;
+  height: 8px;
+  background: rgba(164, 160, 134, 0.2);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.confidence-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #a4a086, #908972);
+  border-radius: 4px;
+  transition: width 0.4s ease;
+}
+
+.confidence-text {
+  color: #6b5d4f;
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 /* 专注模式任务列表区域 */
@@ -2130,9 +2547,10 @@ export default {
 }
 
 .focus-tasks-section h3 {
-  color: #a4a086;
+  color: #6b5d4f;
   font-size: 1.3rem;
   margin: 0;
+  font-weight: 600;
 }
 
 /* 环形进度图 */
@@ -2149,26 +2567,26 @@ export default {
 }
 
 .ring-segment {
-  stroke: rgba(247, 245, 240, 0.2);
+  stroke: rgba(164, 160, 134, 0.2);
   stroke-linecap: round;
   transition: all 0.3s ease;
 }
 
 .ring-segment.completed {
-  stroke: #c2b19f;
-  filter: drop-shadow(0 0 8px rgba(212, 184, 150, 0.6));
+  stroke: #a4a086;
+  filter: drop-shadow(0 0 8px rgba(164, 160, 134, 0.6));
 }
 
 .ring-segment.current {
-  stroke: #e5d7c4;
+  stroke: #6b5d4f;
   stroke-width: 16;
-  filter: drop-shadow(0 0 12px rgba(230, 210, 184, 0.8));
+  filter: drop-shadow(0 0 12px rgba(107, 93, 79, 0.8));
   animation: pulse-ring 2s infinite;
 }
 
 .ring-segment.current.completed {
-  stroke: #b5a496;
-  filter: drop-shadow(0 0 12px rgba(196, 164, 132, 0.8));
+  stroke: #a4a086;
+  filter: drop-shadow(0 0 12px rgba(164, 160, 134, 0.8));
 }
 
 .ring-info {
@@ -2183,14 +2601,13 @@ export default {
 }
 
 .completed-count {
-  color: #a4a086;
+  color: #6b5d4f;
   font-size: 1.2rem;
   font-weight: 700;
-  text-shadow: 0 0 8px rgba(129, 199, 132, 0.6);
 }
 
 .total-count {
-  color: rgba(247, 245, 240, 0.6);
+  color: rgba(107, 93, 79, 0.6);
   font-size: 0.8rem;
 }
 
@@ -2228,17 +2645,17 @@ export default {
 }
 
 .focus-tasks-list::-webkit-scrollbar-track {
-  background: rgba(247, 245, 240, 0.1);
+  background: rgba(164, 160, 134, 0.1);
   border-radius: 3px;
 }
 
 .focus-tasks-list::-webkit-scrollbar-thumb {
-  background: rgba(129, 199, 132, 0.5);
+  background: rgba(164, 160, 134, 0.5);
   border-radius: 3px;
 }
 
 .focus-tasks-list::-webkit-scrollbar-thumb:hover {
-  background: rgba(129, 199, 132, 0.7);
+  background: rgba(164, 160, 134, 0.7);
 }
 
 .focus-task-item {
@@ -2246,28 +2663,30 @@ export default {
   align-items: center;
   gap: 15px;
   padding: 15px 20px;
-  background: rgba(247, 245, 240, 0.1);
+  background: rgba(255, 253, 250, 0.9);
   border-radius: 15px;
   border: 2px solid transparent;
   cursor: pointer;
   transition: all 0.3s ease;
   backdrop-filter: blur(10px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
 }
 
 .focus-task-item:hover {
-  background: rgba(247, 245, 240, 0.15);
+  background: rgba(255, 253, 250, 0.95);
   transform: translateX(5px);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
 }
 
 .focus-task-item.current {
   border-color: #a4a086;
-  background: rgba(129, 199, 132, 0.2);
-  box-shadow: 0 0 20px rgba(129, 199, 132, 0.3);
+  background: rgba(164, 160, 134, 0.1);
+  box-shadow: 0 0 20px rgba(164, 160, 134, 0.3);
 }
 
 .focus-task-item.completed {
   opacity: 0.6;
-  background: rgba(247, 245, 240, 0.05);
+  background: rgba(255, 253, 250, 0.7);
 }
 
 .focus-task-item.completed .focus-task-content h4 {
@@ -2287,11 +2706,11 @@ export default {
   display: block;
   width: 24px;
   height: 24px;
-  border: 2px solid rgba(247, 245, 240, 0.5);
+  border: 2px solid rgba(164, 160, 134, 0.5);
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.3s ease;
-  background: rgba(247, 245, 240, 0.1);
+  background: rgba(255, 253, 250, 0.9);
 }
 
 .focus-task-checkbox input:checked + label {
@@ -2315,14 +2734,14 @@ export default {
 }
 
 .focus-task-content h4 {
-  color: white;
+  color: #6b5d4f;
   font-size: 1.1rem;
   margin-bottom: 5px;
   font-weight: 500;
 }
 
 .focus-task-content p {
-  color: rgba(247, 245, 240, 0.7);
+  color: rgba(107, 93, 79, 0.7);
   font-size: 0.9rem;
   line-height: 1.4;
 }
@@ -2361,38 +2780,43 @@ export default {
   font-weight: 600;
   transition: all 0.3s ease;
   backdrop-filter: blur(10px);
-  border: 2px solid rgba(247, 245, 240, 0.2);
-  color: white;
+  border: 2px solid rgba(164, 160, 134, 0.2);
+  color: #6b5d4f;
+  background: rgba(255, 253, 250, 0.9);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
 }
 
 .pause-btn {
-  background: linear-gradient(135deg, #c2b19f, #b5a496);
-  box-shadow: 0 4px 20px rgba(255, 167, 38, 0.3);
+  background: linear-gradient(135deg, #d4c4b0, #c2b19f);
+  color: #6b5d4f;
+  border-color: rgba(212, 196, 176, 0.3);
 }
 
 .pause-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 25px rgba(255, 167, 38, 0.4);
+  box-shadow: 0 6px 20px rgba(212, 196, 176, 0.4);
 }
 
 .complete-btn {
   background: linear-gradient(135deg, #a4a086, #908972);
-  box-shadow: 0 4px 20px rgba(129, 199, 132, 0.3);
+  color: white;
+  border-color: rgba(164, 160, 134, 0.3);
 }
 
 .complete-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 25px rgba(129, 199, 132, 0.4);
+  box-shadow: 0 6px 20px rgba(164, 160, 134, 0.4);
 }
 
 .next-btn {
-  background: linear-gradient(135deg, #a4a086, #908972);
-  box-shadow: 0 4px 20px rgba(100, 181, 246, 0.3);
+  background: linear-gradient(135deg, #b5a496, #a69080);
+  color: white;
+  border-color: rgba(181, 164, 150, 0.3);
 }
 
 .next-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 25px rgba(100, 181, 246, 0.4);
+  box-shadow: 0 6px 20px rgba(181, 164, 150, 0.4);
 }
 
 /* 专注模式动画效果 */
