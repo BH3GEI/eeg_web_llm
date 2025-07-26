@@ -642,19 +642,19 @@ const startParentPopupTimer = () => {
     clearTimeout(parentPopupInitTimer.value)
   }
   
-  // 60秒后显示第一次弹窗，之后每2分钟显示一次
+  // 10秒后显示第一次弹窗，之后每30秒一次
   parentPopupInitTimer.value = setTimeout(() => {
     if (!paused.value && parentPopupRef.value) {
       parentPopupRef.value.showPopup()
     }
     
-    // 之后每2分钟弹一次
+    // 之后每30秒弹一次弹窗
     parentPopupTimer.value = setInterval(() => {
       if (!paused.value && parentPopupRef.value) {
         parentPopupRef.value.showPopup()
       }
-    }, 120000) // 2分钟间隔
-  }, 60000) // 1分钟后第一次弹窗
+    }, 30000) // 30秒间隔
+  }, 10000) // 10秒后第一次弹窗
 }
 
 const stopParentPopupTimer = () => {

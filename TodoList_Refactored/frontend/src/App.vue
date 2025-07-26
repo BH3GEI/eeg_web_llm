@@ -17,7 +17,7 @@
         :messages="chat.chatMessages.value"
         :loading="chat.chatLoading.value"
         :canGenerateTasks="chat.canGenerateTasks.value"
-        :conversationId="chat.conversationId.value"
+        :conversationId="String(chat.conversationId.value || '')"
         @update:selectedParent="chat.selectedParent.value = $event"
         @send-message="handleSendMessage"
         @generate-tasks="handleGenerateTasks"
