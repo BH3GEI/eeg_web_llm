@@ -52,7 +52,7 @@ cp .env.example .env
 启动服务
 
 ````
-cd ./TodoList/frontend
+cd ./CyberParents/frontend
 npm install && npm run dev
 cd ../backend
 python main.py
