@@ -1,6 +1,7 @@
 from cortex import Cortex
 import pandas as pd
 import os
+from dotenv import load_dotenv
 
 class Subcribe():
     """
@@ -250,8 +251,10 @@ class Subcribe():
 def main():
 
     # Please fill your application clientId and clientSecret before running script
-    your_app_client_id = 'pmE0C1iUhn5m5VhpdXCSqMztklWFFe3fNyMY00cf'
-    your_app_client_secret = 'zRBUBqlEstC7pu1fWi0sCWhE2mNJ5dQdeBKc3A79zu2Fqov8tXXtdELPFQqEXiIuW2Ex90KlfUhilWWMwRFXpmSvQ8RKqVdFaPzM9HIoXhzg1voXiWWvFwiBfel3cTdM'
+    load_dotenv(dotenv_path=".env")
+    print(f"Client ID: {os.getenv("EMOTIV_CLIENT_ID")}")
+    your_app_client_id = os.getenv("EMOTIV_CLIENT_ID")
+    your_app_client_secret = os.getenv("EMOTIV_CLIENT_SECRET")
 
     s = Subcribe(your_app_client_id, your_app_client_secret)
 
