@@ -36,7 +36,9 @@
       <ChatInput 
         v-model="inputValue"
         :loading="loading"
+        :selectedParent="selectedParent"
         @send="handleSend"
+        @voice-message="handleVoiceMessage"
       />
       
       <div v-if="canGenerateTasks" class="generate-tasks-hint">
@@ -67,6 +69,7 @@ import { ref, nextTick, watch } from 'vue'
 import ParentSelector from './ParentSelector.vue'
 import ChatMessage from './ChatMessage.vue'
 import ChatInput from './ChatInput.vue'
+import { useVoiceChat } from '../../composables/useVoiceChat.js'
 
 const props = defineProps({
   selectedParent: {
@@ -101,8 +104,45 @@ const emit = defineEmits([
 const inputValue = ref('')
 const chatMessages = ref(null)
 
+// 语音功能
+const { speak } = useVoiceChat()
+
 const handleSend = (message) => {
   emit('send-message', message)
+}
+
+// 处理语音消息
+const handleVoiceMessage = async (transcript) => {
+  // 发送语音识别的消息
+  emit('send-message', transcript)
+  
+  // 等待AI回复完成后，自动播放语音
+  // 这里需要监听最新的AI消息
+  nextTick(() => {
+    watchForNewAIMessage()
+  })
+}
+
+// 监听新的AI消息并播放语音
+const watchForNewAIMessage = () => {
+  const unwatch = watch(() => props.messages, (newMessages, oldMessages) => {
+    if (newMessages.length > oldMessages.length) {
+      const lastMessage = newMessages[newMessages.length - 1]
+      if (lastMessage.role === 'assistant') {
+        // 播放AI回复的语音
+        speak(lastMessage.content, props.selectedParent).catch(error => {
+          console.error('语音播放失败:', error)
+        })
+        // 停止监听
+        unwatch()
+      }
+    }
+  }, { immediate: false })
+  
+  // 5秒后自动停止监听，避免内存泄漏
+  setTimeout(() => {
+    unwatch()
+  }, 5000)
 }
 
 const scrollToBottom = () => {
