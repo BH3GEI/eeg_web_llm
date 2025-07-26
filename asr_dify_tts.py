@@ -59,6 +59,7 @@ async def main():
     
     def fucking_callback(samples):
         text = asr.asr_forward(samples)
+        print(f"ASR: {text}")  # 添加标识符方便WebSocket解析
 
         
         requester = DifyRequester(DIFY_API_KEY_APP_2, base_url=DIFY_BASE_URL, user='123')
@@ -70,7 +71,7 @@ async def main():
         # await task2
         
         response = requester.chat.request(query=text, inputs=inputs)
-        print(response["answer"])
+        print(f"AI回复: {response['answer']}")  # 添加标识符
         samples,sample_rate = tts.synthesize(json.loads(response["answer"])["text"])
         speaker_device.play(samples,sample_rate)
     

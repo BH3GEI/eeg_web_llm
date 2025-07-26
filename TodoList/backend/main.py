@@ -120,6 +120,18 @@ def init_db():
         )
     ''')
     
+    # 用户记忆表 - 极简版本
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS user_memory (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            session_id TEXT NOT NULL,
+            memory_type TEXT NOT NULL,  -- preference, context, goal_pattern
+            content TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    
     # 大目标表（从对话中提炼出的目标）
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS goals (
@@ -224,6 +236,98 @@ async def call_gemini_api(prompt: str) -> str:
         return result['candidates'][0]['content']['parts'][0]['text']
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"AI API调用失败: {str(e)}")
+
+async def get_user_memory(session_id: str) -> str:
+    """获取用户记忆上下文 - 修复版本"""
+    conn = sqlite3.connect('todos.db')
+    cursor = conn.cursor()
+    
+    # 只获取用户偏好记忆，不要历史对话！
+    cursor.execute(
+        "SELECT content FROM user_memory WHERE session_id = ? AND memory_type = 'preference' ORDER BY updated_at DESC LIMIT 3",
+        (session_id,)
+    )
+    preferences = cursor.fetchall()
+    
+    conn.close()
+    
+    memory_context = ""
+    if preferences:
+        memory_context += "用户偏好记忆：\n"
+        for (pref,) in preferences:
+            memory_context += f"- {pref}\n"
+        memory_context += "\n"
+    
+    return memory_context
+
+def build_coaching_prompt_with_memory(messages: List[dict], conversation_status: str, memory_context: str) -> str:
+    """带记忆的对话引导提示词"""
+    conversation_history = "\n".join([
+        f"{'用户' if msg['role'] == 'user' else 'AI助手'}: {msg['content']}" 
+        for msg in messages[-6:]  # 只取最近6轮对话
+    ])
+    
+    base_prompt = f"""你是一个温和、耐心的AI任务规划助手，专门帮助用户明确和细化他们的目标。
+
+你的核心职责：
+1. 通过提问引导用户深入思考
+2. 帮助用户明确模糊的想法
+3. 让用户意识到重要的细节
+4. 营造轻松、无压力的对话氛围
+
+{f"【用户偏好】基于历史记忆，我了解到：{memory_context}" if memory_context.strip() else ""}
+
+对话原则：
+- 一次只问1-2个问题，不要让用户感到压力
+- 用温和、好奇的语气，像朋友聊天一样
+- 关注用户的真实动机和约束条件
+- 如果有用户偏好记忆，结合这些信息提供个性化建议
+- 如果用户说不知道，给出几个选项让他们选择
+- 适当使用emoji让对话更轻松
+
+当前对话状态：{conversation_status}
+- exploring: 初步了解用户想法，挖掘真实需求
+- clarifying: 细化具体细节，明确约束条件  
+- ready: 目标足够清晰，可以生成任务计划
+
+当前对话：
+{conversation_history}
+
+请根据用户的最新消息，结合历史记忆，以温和引导的方式回复："""
+
+    if conversation_status == "exploring":
+        return base_prompt + """
+重点挖掘：
+- 用户的真实动机（为什么想做这件事？）
+- 大致的时间范围和投入程度
+- 是否有相关经验或基础
+"""
+    elif conversation_status == "clarifying":
+        return base_prompt + """
+重点明确：
+- 具体的成功标准是什么？
+- 有哪些现实约束（时间、预算、技能）？
+- 优先级如何排序？
+"""
+    else:
+        return base_prompt + """
+如果信息足够清晰，请明确表示准备好生成任务计划，例如：
+"太好了！我们已经把目标理清楚了，现在我准备好为你制定一个具体的行动计划。"
+或者："信息很完整了！我现在可以生成任务计划了"
+
+如果还需要澄清关键信息，继续温和地提问。
+"""
+
+async def save_user_preference(session_id: str, preference: str):
+    """保存用户偏好到记忆"""
+    conn = sqlite3.connect('todos.db')
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT OR REPLACE INTO user_memory (session_id, memory_type, content, updated_at) VALUES (?, 'preference', ?, datetime('now'))",
+        (session_id, preference)
+    )
+    conn.commit()
+    conn.close()
 
 # 构建对话引导的AI提示词
 def build_coaching_prompt(messages: List[dict], conversation_status: str) -> str:
@@ -338,8 +442,11 @@ async def chat_with_ai(request: ChatRequest):
         )
         recent_messages = [{"role": row[0], "content": row[1]} for row in reversed(cursor.fetchall())]
         
-        # 生成AI回复
-        prompt = build_coaching_prompt(recent_messages, conversation_status)
+        # 获取用户记忆上下文
+        memory_context = await get_user_memory(request.session_id)
+        
+        # 生成AI回复（加入记忆）
+        prompt = build_coaching_prompt_with_memory(recent_messages, conversation_status, memory_context)
         ai_response = await call_gemini_api(prompt)
         
         # 判断是否需要更新对话状态
@@ -376,6 +483,40 @@ async def chat_with_ai(request: ChatRequest):
     except Exception as e:
         conn.rollback()
         raise HTTPException(status_code=500, detail=f"对话处理失败: {str(e)}")
+    finally:
+        conn.close()
+
+@app.post("/new-conversation")
+async def start_new_conversation(request: ChatRequest):
+    """开始新对话（保持记忆但清空当前对话上下文）"""
+    conn = sqlite3.connect('todos.db')
+    cursor = conn.cursor()
+    
+    try:
+        # 创建新的对话会话
+        cursor.execute(
+            "INSERT INTO conversations (session_id, status) VALUES (?, 'exploring')",
+            (request.session_id,)
+        )
+        new_conversation_id = cursor.lastrowid
+        
+        # 添加新对话开始标记
+        cursor.execute(
+            "INSERT INTO messages (conversation_id, role, content, message_type) VALUES (?, 'assistant', ?, 'system')",
+            (new_conversation_id, "开始新的对话，我会记住您之前的偏好，为您提供更好的帮助。")
+        )
+        
+        conn.commit()
+        
+        return {
+            "conversation_id": new_conversation_id,
+            "message": "新对话已创建，记忆已保留",
+            "status": "success"
+        }
+        
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=f"创建新对话失败: {str(e)}")
     finally:
         conn.close()
 
@@ -509,6 +650,22 @@ async def generate_tasks_from_conversation(conversation_id: int):
                 "UPDATE conversations SET status = 'completed', final_goal = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
                 (result['goal_title'], conversation_id)
             )
+            
+            # 简单学习：从对话中提取用户偏好
+            learning_prompt = f"""
+            基于以下对话，提取用户的工作偏好和特点，用一句话总结：
+            {conversation_summary}
+            
+            只返回一句话的偏好总结，例如："偏好细致的计划，注重学习过程"
+            """
+            try:
+                user_preference = await call_gemini_api(learning_prompt)
+                # 获取session_id
+                cursor.execute("SELECT session_id FROM conversations WHERE id = ?", (conversation_id,))
+                session_id = cursor.fetchone()[0]
+                await save_user_preference(session_id, user_preference.strip())
+            except:
+                pass  # 学习失败不影响主流程
             
             conn.commit()
             
@@ -866,29 +1023,47 @@ async def end_focus_session(session_id: int, notes: str = ""):
 
 @app.get("/focus/current/{task_id}")
 async def get_current_focus_data(task_id: int):
-    """获取当前任务的专注数据（模拟数据）"""
-    import random
-    import time
+    """获取当前任务的专注数据（真实EEG+情绪数据）"""
+    from real_data_reader import RealBioDataReader
     
-    # 模拟实时数据
-    current_time = int(time.time())
-    
-    return {
-        "task_id": task_id,
-        "current_data": {
-            "heart_rate": random.randint(70, 90),
-            "stress_level": round(random.uniform(0.2, 0.8), 2),
-            "emotion_state": random.choice(["平静", "愉悦", "思考", "中性", "紧张"]),
-            "focus_level": round(random.uniform(0.6, 0.95), 2),
-            "session_duration": random.randint(5, 45),  # 分钟
-            "interruptions": random.randint(0, 3)
-        },
-        "trends": {
-            "heart_rate_trend": [random.randint(70, 90) for _ in range(10)],
-            "focus_trend": [round(random.uniform(0.6, 0.95), 2) for _ in range(10)]
-        },
-        "timestamp": current_time
-    }
+    try:
+        reader = RealBioDataReader()
+        data = reader.get_comprehensive_focus_data(task_id)
+        return data
+    except Exception as e:
+        print(f"获取真实数据失败，使用回退数据: {e}")
+        # 回退到基本的随机数据
+        import random
+        import time
+        return {
+            "task_id": task_id,
+            "current_data": {
+                "focus_level": round(random.uniform(0.6, 0.95), 3),
+                "attention": round(random.uniform(0.6, 0.9), 3),
+                "engagement": round(random.uniform(0.5, 0.8), 3),
+                "excitement": round(random.uniform(0.3, 0.7), 3),
+                "interest": round(random.uniform(0.5, 0.8), 3),
+                "stress_level": round(random.uniform(0.2, 0.6), 3),
+                "relaxation": round(random.uniform(0.3, 0.7), 3),
+                "current_emotion": random.choice(["focused", "calm", "neutral", "thinking"]),
+                "emotion_confidence": round(random.uniform(0.6, 0.9), 3),
+                "data_quality": "fallback"
+            },
+            "trends": {
+                "focus": [round(random.uniform(0.6, 0.95), 3) for _ in range(10)],
+                "attention": [round(random.uniform(0.6, 0.9), 3) for _ in range(10)],
+                "engagement": [round(random.uniform(0.5, 0.8), 3) for _ in range(10)],
+                "excitement": [round(random.uniform(0.3, 0.7), 3) for _ in range(10)],
+                "interest": [round(random.uniform(0.5, 0.8), 3) for _ in range(10)],
+                "stress": [round(random.uniform(0.2, 0.6), 3) for _ in range(10)],
+                "relaxation": [round(random.uniform(0.3, 0.7), 3) for _ in range(10)]
+            },
+            "metadata": {
+                "eeg_source": "fallback",
+                "emotion_source": "fallback", 
+                "last_updated": int(time.time())
+            }
+        }
 
 if __name__ == "__main__":
     import uvicorn
