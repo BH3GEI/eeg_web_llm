@@ -103,7 +103,7 @@ def write_eeg_data():
     # 检查文件是否存在，如果不存在则写入表头
     file_exists = os.path.exists(csv_file)
     
-    print(f"🧠 开始生成模拟EEG脑电数据...")
+    print(f" 开始生成模拟EEG脑电数据...")
     print(f"📁 数据文件: {csv_file}")
     print(f"⏱️  采样间隔: 1秒")
     print(f"📊 监测指标: {', '.join(eeg_metrics)}")
@@ -128,7 +128,7 @@ def write_eeg_data():
                 # 检查是否需要切换状态
                 if state_duration <= 0:
                     current_state, state_ranges, state_duration = generate_realistic_eeg_pattern()
-                    print(f"🧠 生理状态切换到: {current_state} (持续{state_duration}秒)")
+                    print(f" 生理状态切换到: {current_state} (持续{state_duration}秒)")
                 
                 # 生成当前时间戳
                 timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]  # 精确到毫秒
@@ -163,7 +163,7 @@ def generate_batch_data(num_samples=120):
     # 确保目录存在
     os.makedirs(os.path.dirname(csv_file), exist_ok=True)
     
-    print(f"🧠 生成 {num_samples} 个模拟EEG数据样本...")
+    print(f" 生成 {num_samples} 个模拟EEG数据样本...")
     
     current_state = None
     state_duration = 0
@@ -180,7 +180,7 @@ def generate_batch_data(num_samples=120):
             # 检查是否需要切换状态
             if state_duration <= 0:
                 current_state, state_ranges, state_duration = generate_realistic_eeg_pattern()
-                print(f"🧠 状态: {current_state} (持续{state_duration}秒)")
+                print(f" 状态: {current_state} (持续{state_duration}秒)")
             
             # 生成时间戳（向前推移1秒）
             import datetime as dt
@@ -212,7 +212,7 @@ def generate_batch_data(num_samples=120):
 if __name__ == "__main__":
     import sys
     
-    print("🧠 模拟EEG脑电数据生成器")
+    print(" 模拟EEG脑电数据生成器")
     print("=" * 50)
     
     if len(sys.argv) > 1 and sys.argv[1] == "batch":
