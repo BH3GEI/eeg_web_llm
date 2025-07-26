@@ -7,6 +7,7 @@ import sqlite3
 import json
 import requests
 import os
+from datetime import datetime
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -87,6 +88,13 @@ class ChatRequest(BaseModel):
     session_id: str
     message: str
     parent_type: str = 'dad'  # 默认为爸爸
+
+class ParentMessageRequest(BaseModel):
+    parent_type: str = 'dad'  # 'dad' or 'mom'
+    current_state: dict
+    context: dict
+    task_context: Optional[dict] = None
+    session_id: str
 
 class TaskBreakdownRequest(BaseModel):
     goal: str
@@ -1058,45 +1066,311 @@ async def end_focus_session(session_id: int, notes: str = ""):
 
 @app.get("/focus/current/{task_id}")
 async def get_current_focus_data(task_id: int):
-    """获取当前任务的专注数据（真实EEG+情绪数据）"""
-    from real_data_reader import RealBioDataReader
+    """获取当前任务的专注数据（读取真实CSV文件）"""
+    import csv
+    import os
+    from datetime import datetime, timedelta
     
     try:
-        reader = RealBioDataReader()
-        data = reader.get_comprehensive_focus_data(task_id)
-        return data
-    except Exception as e:
-        print(f"获取真实数据失败，使用回退数据: {e}")
-        # 回退到基本的随机数据
-        import random
-        import time
+        # CSV文件路径
+        base_dir = "/Users/liyao/Code/AdventureX/SmartList/eeg_web_llm"
+        today = datetime.now().strftime("%Y-%m-%d")
+        eeg_file = f"{base_dir}/{today}.csv"
+        emotion_file = f"{base_dir}/EmotionCV/emotion_log.csv"
+        
+        # 读取EEG数据
+        eeg_data = []
+        if os.path.exists(eeg_file):
+            with open(eeg_file, 'r') as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    eeg_data.append(row)
+        
+        # 读取情绪数据
+        emotion_data = []
+        if os.path.exists(emotion_file):
+            with open(emotion_file, 'r') as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    emotion_data.append(row)
+        
+        if not eeg_data:
+            raise Exception("No EEG data found")
+        
+        # 获取最后10条EEG数据作为趋势
+        recent_eeg = eeg_data[-10:] if len(eeg_data) >= 10 else eeg_data
+        latest_eeg = eeg_data[-1]
+        
+        # 获取最新情绪数据和趋势
+        latest_emotion = emotion_data[-1] if emotion_data else None
+        recent_emotions = emotion_data[-10:] if len(emotion_data) >= 10 else emotion_data
+        
+        # 提取EEG趋势数据
+        trends = {
+            "attention": [float(row['attention']) for row in recent_eeg],
+            "engagement": [float(row['engagement']) for row in recent_eeg], 
+            "excitement": [float(row['excitement']) for row in recent_eeg],
+            "interest": [float(row['interest']) for row in recent_eeg],
+            "stress": [float(row['stress']) for row in recent_eeg],
+            "relaxation": [float(row['relaxation']) for row in recent_eeg]
+        }
+        
+        # 添加情绪趋势数据（如果有情绪数据）
+        if recent_emotions:
+            # 确保情绪数据和EEG数据长度一致，取对应的情绪数据
+            emotion_subset = recent_emotions[-len(recent_eeg):] if len(recent_emotions) >= len(recent_eeg) else recent_emotions
+            # 如果情绪数据不够，就重复最后一条数据
+            while len(emotion_subset) < len(recent_eeg):
+                emotion_subset.append(emotion_subset[-1] if emotion_subset else {})
+            
+            trends["happiness"] = [float(row.get('Happy', 0)) for row in emotion_subset[:len(recent_eeg)]]
+            trends["sadness"] = [float(row.get('Sad', 0)) for row in emotion_subset[:len(recent_eeg)]]
+            trends["anger"] = [float(row.get('Angry', 0)) for row in emotion_subset[:len(recent_eeg)]]
+            trends["neutral"] = [float(row.get('Neutral', 0)) for row in emotion_subset[:len(recent_eeg)]]
+        
+        # 计算focus趋势（专注度 = 注意力*0.6 + 参与度*0.4）
+        trends["focus"] = [
+            round(att * 0.6 + eng * 0.4, 3) 
+            for att, eng in zip(trends["attention"], trends["engagement"])
+        ]
+        
+        # 当前数据
+        current_attention = float(latest_eeg['attention'])
+        current_engagement = float(latest_eeg['engagement'])
+        current_focus = round(current_attention * 0.6 + current_engagement * 0.4, 3)
+        
+        # 情绪数据
+        current_emotion = "neutral"
+        emotion_confidence = 0.7
+        if latest_emotion:
+            current_emotion = latest_emotion.get('Dominant Emotion', 'neutral').lower()
+            # 找到最高的情绪分数作为置信度
+            emotion_scores = {
+                'happy': float(latest_emotion.get('Happy', 0)),
+                'sad': float(latest_emotion.get('Sad', 0)),
+                'angry': float(latest_emotion.get('Angry', 0)),
+                'neutral': float(latest_emotion.get('Neutral', 0))
+            }
+            emotion_confidence = max(emotion_scores.values())
+        
         return {
             "task_id": task_id,
             "current_data": {
-                "focus_level": round(random.uniform(0.6, 0.95), 3),
-                "attention": round(random.uniform(0.6, 0.9), 3),
-                "engagement": round(random.uniform(0.5, 0.8), 3),
-                "excitement": round(random.uniform(0.3, 0.7), 3),
-                "interest": round(random.uniform(0.5, 0.8), 3),
-                "stress_level": round(random.uniform(0.2, 0.6), 3),
-                "relaxation": round(random.uniform(0.3, 0.7), 3),
-                "current_emotion": random.choice(["focused", "calm", "neutral", "thinking"]),
-                "emotion_confidence": round(random.uniform(0.6, 0.9), 3),
+                "focus_level": current_focus,
+                "attention": current_attention,
+                "engagement": current_engagement,
+                "excitement": float(latest_eeg['excitement']),
+                "interest": float(latest_eeg['interest']),
+                "stress_level": float(latest_eeg['stress']),
+                "relaxation": float(latest_eeg['relaxation']),
+                "current_emotion": current_emotion,
+                "emotion_confidence": round(emotion_confidence, 3),
+                "data_quality": "real_data"
+            },
+            "trends": trends,
+            "metadata": {
+                "eeg_source": "real_csv",
+                "emotion_source": "real_csv" if latest_emotion else "none",
+                "eeg_samples": len(recent_eeg),
+                "emotion_samples": len(emotion_data),
+                "last_updated": datetime.now().isoformat(),
+                "data_file": eeg_file
+            }
+        }
+        
+    except Exception as e:
+        print(f"读取CSV文件失败: {e}")
+        # 降级到简单的静态数据（不是随机的）
+        return {
+            "task_id": task_id,
+            "current_data": {
+                "focus_level": 0.75,
+                "attention": 0.8,
+                "engagement": 0.65,
+                "excitement": 0.4,
+                "interest": 0.7,
+                "stress_level": 0.3,
+                "relaxation": 0.5,
+                "current_emotion": "focused",
+                "emotion_confidence": 0.8,
                 "data_quality": "fallback"
             },
             "trends": {
-                "focus": [round(random.uniform(0.6, 0.95), 3) for _ in range(10)],
-                "attention": [round(random.uniform(0.6, 0.9), 3) for _ in range(10)],
-                "engagement": [round(random.uniform(0.5, 0.8), 3) for _ in range(10)],
-                "excitement": [round(random.uniform(0.3, 0.7), 3) for _ in range(10)],
-                "interest": [round(random.uniform(0.5, 0.8), 3) for _ in range(10)],
-                "stress": [round(random.uniform(0.2, 0.6), 3) for _ in range(10)],
-                "relaxation": [round(random.uniform(0.3, 0.7), 3) for _ in range(10)]
+                "focus": [0.7, 0.72, 0.75, 0.73, 0.76, 0.74, 0.77, 0.75, 0.78, 0.75],
+                "attention": [0.8, 0.82, 0.8, 0.78, 0.81, 0.79, 0.83, 0.8, 0.84, 0.8],
+                "engagement": [0.6, 0.62, 0.65, 0.63, 0.66, 0.64, 0.67, 0.65, 0.68, 0.65],
+                "excitement": [0.4, 0.42, 0.4, 0.38, 0.41, 0.39, 0.43, 0.4, 0.44, 0.4],
+                "interest": [0.7, 0.72, 0.7, 0.68, 0.71, 0.69, 0.73, 0.7, 0.74, 0.7],
+                "stress": [0.3, 0.32, 0.3, 0.28, 0.31, 0.29, 0.33, 0.3, 0.34, 0.3],
+                "relaxation": [0.5, 0.52, 0.5, 0.48, 0.51, 0.49, 0.53, 0.5, 0.54, 0.5]
             },
             "metadata": {
                 "eeg_source": "fallback",
-                "emotion_source": "fallback", 
-                "last_updated": int(time.time())
+                "emotion_source": "fallback",
+                "eeg_samples": 10,
+                "emotion_samples": 0,
+                "last_updated": datetime.now().isoformat(),
+                "error": str(e)
+            }
+        }
+
+@app.post("/generate-parent-message")
+async def generate_parent_message(request: ParentMessageRequest):
+    """生成LLM驱动的家长式监督消息"""
+    try:
+        # 构建给LLM的提示词
+        parent_name = "老爸" if request.parent_type == 'dad' else "老妈"
+        
+        # 分析当前状态
+        focus_level = request.current_state.get('focusLevel', 0)
+        stress_level = request.current_state.get('stressLevel', 0)
+        emotion = request.current_state.get('emotion', 'neutral')
+        completion_rate = request.current_state.get('completionRate', 0)
+        focus_time = request.current_state.get('focusTime', 0)
+        
+        # 获取上下文
+        recent_history = request.context.get('recent_history', '')
+        focus_trend = request.context.get('focus_trend', 'stable')
+        stress_trend = request.context.get('stress_trend', 'stable')
+        
+        # 格式化时间
+        minutes = focus_time // 60
+        seconds = focus_time % 60
+        time_str = f"{minutes}分{seconds}秒"
+        
+        # 根据父母类型构建提示词
+        if request.parent_type == 'dad':
+            personality_prompt = """你是一个典型的中国式老爸，说话特点：
+- 经典开场："你说你这孩子..."、"我跟你说..."
+- 爱用比喻："做人如做菜，要有火候"
+- PUA式激将："就你这样还想..."、"我像你这么大的时候..."
+- 古怪哲学："吃得苦中苦，方为人上人"
+- 直男关怀："行了别墨迹了"、"做就完了"
+- 口头禅："听爸爸的没错"、"社会很现实的"
+- 偶尔夸奖立马转折："嗯，还凑合，但是..."""
+        else:
+            personality_prompt = """你是一个典型的中国式老妈，说话特点：
+- 经典开场："哎呀我的傻孩子..."、"妈跟你说啊..."
+- 抽象担忧："这样下去可怎么办啊"、"妈妈都替你着急"
+- 情感绑架："妈妈都是为了你好"、"你让妈妈怎么放心"
+- 比较打击："你看人家xxx家孩子..."
+- 唠叨哲学："细节决定成败"、"马虎要不得"
+- 口头禅："妈妈不会害你的"、"听妈妈的准没错"
+- 关怀焦虑："这样真的好吗？"、"会不会有问题？"""
+
+        # 构建状态描述
+        status_description = f"""
+当前监控数据：
+- 专注度：{int(focus_level * 100)}%
+- 压力水平：{int(stress_level * 100)}%
+- 情绪状态：{emotion}
+- 任务完成率：{int(completion_rate * 100)}%
+- 专注时间：{time_str}
+- 专注度趋势：{focus_trend}
+- 压力趋势：{stress_trend}
+"""
+
+        # 添加任务上下文描述
+        task_description = ""
+        if request.task_context:
+            task_info = request.task_context
+            goal_title = task_info.get('goal', {}).get('title', '未知目标')
+            current_task = task_info.get('currentTask')
+            completed_tasks = task_info.get('completedTasks', 0)
+            total_tasks = task_info.get('totalTasks', 1)
+            
+            task_description = f"""
+当前学习情况：
+- 总目标：{goal_title}
+- 当前任务：{current_task.get('title', '未开始') if current_task else '无任务'}
+- 任务描述：{current_task.get('description', '无描述') if current_task else '无描述'}
+- 进度：已完成{completed_tasks}/{total_tasks}个任务
+"""
+
+        # 如果有历史消息，加入上下文
+        context_prompt = ""
+        if recent_history.strip():
+            context_prompt = f"\n最近的话：{recent_history}\n要注意前后呼应，不要重复说同样的话。"
+
+        # 完整提示词
+        full_prompt = f"""{personality_prompt}
+
+你正在监督孩子的学习专注状态，需要根据实时数据和具体任务给出一句话的评价或建议。
+
+{status_description}
+{task_description}
+{context_prompt}
+
+要求：
+1. 只返回一句话，不超过30个字
+2. 要体现{parent_name}的典型说话风格
+3. 根据数据情况给出合适的反应（表扬、催促、担心等）
+4. 如果专注度低于40%要催促，高于80%要表扬但不能太夸张
+5. 如果压力过高要表示担心，时间太短要催促继续
+6. **重要：要结合具体的任务内容**，比如提到任务名称或学习内容
+7. 要有真实的家长感觉，接地气
+
+直接返回{parent_name}要说的话，不要任何解释："""
+
+        # 调用LLM
+        response = await call_gemini_api(full_prompt)
+        
+        # 清理响应，确保只有一句话
+        message = response.strip()
+        # 移除可能的引号
+        if message.startswith('"') and message.endswith('"'):
+            message = message[1:-1]
+        if message.startswith('"') and message.endswith('"'):
+            message = message[1:-1]
+        
+        # 限制长度
+        if len(message) > 40:
+            message = message[:40] + "..."
+        
+        return {
+            "message": message,
+            "parent_type": request.parent_type,
+            "context": {
+                "focus_level": focus_level,
+                "stress_level": stress_level,
+                "emotion": emotion,
+                "generated_at": datetime.now().isoformat()
+            }
+        }
+        
+    except Exception as e:
+        print(f"LLM生成消息失败: {e}")
+        # 获取任务信息用于降级消息
+        task_name = "学习"
+        if request.task_context and request.task_context.get('currentTask'):
+            task_name = request.task_context['currentTask'].get('title', '学习')
+        
+        # 降级到简单的模板消息，但包含任务内容
+        fallback_messages = {
+            'dad': [
+                f"专注度{int(focus_level * 100)}%，{task_name}要认真点！听爸爸的没错。",
+                f"做{task_name}已经{time_str}了，别松懈！",
+                f"你说你这孩子，{task_name}专注度才{int(focus_level * 100)}%？"
+            ],
+            'mom': [
+                f"孩子，做{task_name}专注度{int(focus_level * 100)}%，妈妈相信你！",
+                f"{task_name}已经{time_str}了，很棒！要注意休息哦。",
+                f"哎呀，{task_name}专注度{int(focus_level * 100)}%，妈妈都替你着急！"
+            ]
+        }
+        
+        import random
+        fallback_message = random.choice(fallback_messages[request.parent_type])
+        
+        return {
+            "message": fallback_message,
+            "parent_type": request.parent_type,
+            "context": {
+                "focus_level": focus_level,
+                "stress_level": stress_level,
+                "emotion": emotion,
+                "generated_at": datetime.now().isoformat(),
+                "fallback": True
             }
         }
 

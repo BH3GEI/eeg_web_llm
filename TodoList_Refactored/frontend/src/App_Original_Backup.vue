@@ -1359,9 +1359,9 @@ export default {
   animation: cyber-pulse 2s ease-in-out infinite;
 }
 
-/* 对话容器 - 更高对比度 */
+/* 对话容器 */
 .chat-container {
-  background: var(--cyber-glass-dark);
+  background: var(--cyber-glass);
   border-radius: 25px;
   box-shadow: var(--cyber-shadow-neon);
   backdrop-filter: blur(25px);
@@ -1379,8 +1379,8 @@ export default {
   right: 0;
   bottom: 0;
   background: linear-gradient(135deg, 
-    rgba(0, 255, 255, 0.08) 0%, 
-    rgba(155, 89, 182, 0.05) 100%);
+    rgba(0, 212, 255, 0.05) 0%, 
+    rgba(176, 38, 255, 0.05) 100%);
   pointer-events: none;
   z-index: 0;
 }
@@ -1390,16 +1390,16 @@ export default {
   overflow-y: auto;
   padding: 30px;
   padding-bottom: 20px;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(11, 13, 23, 0.3);
   position: relative;
   z-index: 1;
 }
 
-/* 父母角色选择样式 - 提高对比度 */
+/* 父母角色选择样式 */
 .parent-selection {
   padding: 25px 30px;
   border-bottom: 1px solid var(--cyber-glass-border);
-  background: var(--cyber-dark-gray);
+  background: var(--cyber-bg-secondary);
   position: relative;
   z-index: 1;
 }
@@ -1410,7 +1410,7 @@ export default {
   font-size: 15px;
   font-weight: 600;
   margin-bottom: 15px;
-  text-shadow: 0 0 10px var(--cyber-neon-cyan);
+  text-shadow: 0 0 10px var(--cyber-neon-blue);
 }
 
 .parent-buttons {
@@ -1422,7 +1422,7 @@ export default {
   padding: 12px 20px;
   border: 2px solid var(--cyber-glass-border);
   border-radius: 25px;
-  background: var(--cyber-glass-dark);
+  background: var(--cyber-glass);
   color: var(--cyber-text-primary);
   font-size: 15px;
   font-weight: 600;
@@ -1432,7 +1432,7 @@ export default {
   align-items: center;
   gap: 8px;
   backdrop-filter: blur(15px);
-  box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+  box-shadow: 0 0 15px rgba(0, 212, 255, 0.3);
   position: relative;
   overflow: hidden;
 }
@@ -1444,14 +1444,14 @@ export default {
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.3), transparent);
+  background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.3), transparent);
   transition: left 0.5s ease;
 }
 
 .parent-btn:hover {
-  border-color: var(--cyber-neon-cyan);
-  background: rgba(0, 255, 255, 0.2);
-  box-shadow: 0 0 25px var(--cyber-neon-cyan);
+  border-color: var(--cyber-neon-blue);
+  background: rgba(0, 212, 255, 0.2);
+  box-shadow: 0 0 25px var(--cyber-neon-blue);
   transform: translateY(-2px);
 }
 
@@ -1460,13 +1460,13 @@ export default {
 }
 
 .parent-btn.active {
-  border-color: var(--cyber-neon-cyan);
-  background: linear-gradient(135deg, var(--cyber-neon-cyan), var(--cyber-neon-purple));
+  border-color: var(--cyber-neon-blue);
+  background: linear-gradient(135deg, var(--cyber-neon-blue), var(--cyber-neon-purple));
   color: var(--cyber-text-dark);
-  box-shadow: 0 0 30px var(--cyber-neon-cyan);
+  box-shadow: 0 0 30px var(--cyber-neon-blue);
 }
 
-/* 欢迎消息样式 - 高对比度 */
+/* 欢迎消息样式 */
 .welcome-message {
   display: flex;
   gap: 15px;
@@ -1477,16 +1477,16 @@ export default {
 }
 
 .welcome-message .message-content {
-  background: var(--cyber-glass-dark);
-  border: 1px solid var(--cyber-neon-cyan);
+  background: var(--cyber-glass);
+  border: 1px solid var(--cyber-neon-blue);
   border-radius: 20px;
   padding: 18px 22px;
   color: var(--cyber-text-primary);
-  box-shadow: 0 0 20px rgba(0, 255, 255, 0.4);
+  box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
   backdrop-filter: blur(15px);
 }
 
-/* 消息样式 - 高对比度 */
+/* 消息样式 */
 .message {
   display: flex;
   gap: 15px;
@@ -1510,8 +1510,8 @@ export default {
   font-size: 20px;
   flex-shrink: 0;
   margin-top: 3px;
-  border: 2px solid var(--cyber-neon-cyan);
-  box-shadow: 0 0 20px var(--cyber-neon-cyan);
+  border: 2px solid var(--cyber-neon-blue);
+  box-shadow: 0 0 20px var(--cyber-neon-blue);
   position: relative;
   overflow: hidden;
 }
@@ -1524,7 +1524,7 @@ export default {
   left: -2px;
   right: -2px;
   bottom: -2px;
-  background: conic-gradient(from 0deg, var(--cyber-neon-cyan), var(--cyber-neon-purple), var(--cyber-neon-green), var(--cyber-neon-cyan));
+  background: conic-gradient(from 0deg, var(--cyber-neon-blue), var(--cyber-neon-purple), var(--cyber-neon-green), var(--cyber-neon-blue));
   border-radius: 50%;
   z-index: -1;
   animation: spin 3s linear infinite;
@@ -1536,10 +1536,10 @@ export default {
 }
 
 .ai-avatar {
-  background: linear-gradient(135deg, var(--cyber-neon-cyan), var(--cyber-neon-purple));
+  background: linear-gradient(135deg, var(--cyber-neon-blue), var(--cyber-neon-purple));
   color: var(--cyber-text-dark);
-  border: 2px solid var(--cyber-neon-cyan);
-  box-shadow: 0 0 25px var(--cyber-neon-cyan);
+  border: 2px solid var(--cyber-neon-blue);
+  box-shadow: 0 0 25px var(--cyber-neon-blue);
 }
 
 .user-avatar {
@@ -1551,14 +1551,14 @@ export default {
 
 .message-content {
   max-width: 75%;
-  background: var(--cyber-glass-dark);
+  background: var(--cyber-glass);
   border: 1px solid var(--cyber-glass-border);
   border-radius: 20px;
   padding: 15px 20px;
   word-wrap: break-word;
   color: var(--cyber-text-primary);
   backdrop-filter: blur(15px);
-  box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+  box-shadow: 0 0 15px rgba(0, 212, 255, 0.2);
   position: relative;
 }
 
@@ -1570,8 +1570,8 @@ export default {
   right: 0;
   bottom: 0;
   background: linear-gradient(135deg, 
-    rgba(0, 255, 255, 0.1) 0%, 
-    rgba(155, 89, 182, 0.05) 100%);
+    rgba(0, 212, 255, 0.1) 0%, 
+    rgba(176, 38, 255, 0.05) 100%);
   border-radius: 20px;
   pointer-events: none;
 }
@@ -1580,12 +1580,12 @@ export default {
   background: linear-gradient(135deg, var(--cyber-neon-purple), var(--cyber-neon-pink));
   color: var(--cyber-text-dark);
   border-color: var(--cyber-neon-purple);
-  box-shadow: 0 0 20px rgba(155, 89, 182, 0.5);
+  box-shadow: 0 0 20px rgba(176, 38, 255, 0.4);
 }
 
-/* 输入区域和按钮样式 - 高对比度 */
+/* 输入区域和按钮样式 */
 .message.assistant .message-content {
-  background: var(--cyber-glass-dark);
+  background: var(--cyber-glass);
   border-color: var(--cyber-glass-border);
 }
 
@@ -1595,7 +1595,6 @@ export default {
   font-size: 15px;
   position: relative;
   z-index: 1;
-  font-weight: 500;
 }
 
 .message-content p + p {
@@ -1608,11 +1607,11 @@ export default {
   animation: cyber-pulse 1.5s ease-in-out infinite;
 }
 
-/* 聊天输入区域 - 高对比度 */
+/* 聊天输入区域 */
 .chat-input-area {
   border-top: 1px solid var(--cyber-glass-border);
   padding: 25px 30px;
-  background: var(--cyber-dark-gray);
+  background: var(--cyber-bg-secondary);
   position: relative;
   z-index: 1;
 }
@@ -1631,7 +1630,7 @@ export default {
   font-size: 15px;
   resize: none;
   font-family: inherit;
-  background: var(--cyber-glass-dark);
+  background: var(--cyber-glass);
   color: var(--cyber-text-primary);
   transition: all 0.3s ease;
   backdrop-filter: blur(15px);
@@ -1643,9 +1642,9 @@ export default {
 
 .chat-input:focus {
   outline: none;
-  border-color: var(--cyber-neon-cyan);
-  background: rgba(0, 255, 255, 0.1);
-  box-shadow: 0 0 20px rgba(0, 255, 255, 0.4);
+  border-color: var(--cyber-neon-blue);
+  background: rgba(0, 212, 255, 0.1);
+  box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
 }
 
 .send-btn {
@@ -1653,7 +1652,7 @@ export default {
   height: 50px;
   border: none;
   border-radius: 15px;
-  background: linear-gradient(135deg, var(--cyber-neon-cyan), var(--cyber-neon-purple));
+  background: linear-gradient(135deg, var(--cyber-neon-blue), var(--cyber-neon-purple));
   color: var(--cyber-text-dark);
   font-size: 18px;
   cursor: pointer;
@@ -1662,12 +1661,12 @@ export default {
   justify-content: center;
   transition: all 0.3s ease;
   flex-shrink: 0;
-  box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+  box-shadow: 0 0 20px rgba(0, 212, 255, 0.4);
 }
 
 .send-btn:hover:not(:disabled) {
   transform: translateY(-2px) scale(1.05);
-  box-shadow: 0 0 30px var(--cyber-neon-cyan), 0 0 50px var(--cyber-neon-purple);
+  box-shadow: 0 0 30px var(--cyber-neon-blue), 0 0 50px var(--cyber-neon-purple);
 }
 
 .send-btn:disabled {
@@ -2606,7 +2605,7 @@ export default {
   }
 }
 
-/* 专注模式全屏界面样式 - 修复透明背景 */
+/* 专注模式全屏界面样式 */
 .focus-overlay {
   position: fixed;
   top: 0;
@@ -2630,8 +2629,8 @@ export default {
   width: 100%;
   height: 100%;
   background-image: 
-    linear-gradient(var(--cyber-neon-cyan) 1px, transparent 1px),
-    linear-gradient(90deg, var(--cyber-neon-cyan) 1px, transparent 1px);
+    linear-gradient(var(--cyber-neon-blue) 1px, transparent 1px),
+    linear-gradient(90deg, var(--cyber-neon-blue) 1px, transparent 1px);
   background-size: 60px 60px;
   opacity: 0.05;
   pointer-events: none;
@@ -2651,8 +2650,6 @@ export default {
   box-sizing: border-box;
   position: relative;
   z-index: 1;
-  background: rgba(0, 0, 0, 0.8);
-  backdrop-filter: blur(10px);
 }
 
 /* 专注模式头部 */

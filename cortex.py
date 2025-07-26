@@ -1,5 +1,6 @@
 import sys
 import warnings
+import os
 # --- BEGIN: Simplified environment checks ---
 # 1. Check Python version
 if sys.version_info < (2, 7) or (3, 0) <= sys.version_info < (3, 4):
@@ -92,7 +93,7 @@ class Cortex(Dispatcher):
         self.headset_id = ''
         self.debug = debug_mode
         self.debit = 10
-        self.license = 'f58c4476-04d9-44ad-850f-1714d68484a2'
+        self.license = os.getenv("EMOTIV_LICENSE")
         self.isHeadsetConnected = False
 
         if client_id == '':
